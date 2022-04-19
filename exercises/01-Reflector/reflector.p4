@@ -33,6 +33,7 @@ parser MyParser(packet_in packet,
       state start{
 
           /* TODO 1: parse ethernet header */
+          packet.extract(hdr.ethernet_t);
           transition accept;
       }
 
@@ -54,10 +55,18 @@ control MyVerifyChecksum(inout headers hdr, inout metadata meta) {
 control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
-
+    
+    action swap_m(){
+        macAddr_t tmp;
+        tmp = hdr.ethernet.srcAddr;
+        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
+        hdr.ethernet.dstAddr = tmp;
+    }
     apply {
        /* TODO 2: swap mac addresses */
        /* TODO 3: set output port    */
+       swap_m();
+       standard_metadata.egress_spec = standard_metadata.ingress_port;
     }
 }
 
@@ -86,6 +95,7 @@ control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
 control MyDeparser(packet_out packet, in headers hdr) {
     apply {
         /* TODO 4: deparse ethernet header */
+        packet.emit(hdr.ethernet);
 	}
 }
 
